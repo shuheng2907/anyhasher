@@ -4,7 +4,11 @@ async function main() {
   try {
     const url = process.env.TEST_URL;
     if (!url) throw Error("No TEST_URL defined.");
-    const browser = await puppeteer.launch();
+    // GitHub's Ubuntu 24.04 runners block Chrome's sandbox, so disable it in CI.
+    // Safe here: we only open our own site in a throwaway CI machine.
+    const browser = await puppeteer.launch({
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
     const page = await browser.newPage();
     await page.goto(url);
     const selector = "#page-title";
