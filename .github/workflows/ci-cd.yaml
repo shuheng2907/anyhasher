@@ -2,9 +2,11 @@ name: CI/CD Pipeline test
 run-name: "🛠️ ${{ github.event.head_commit.message }} (${{ github.sha }})"
 
 on:
+  workflow_dispatch:   # adds a "Run workflow" button in the Actions tab
   pull_request:
   push:
     branches:
+      - main
       - olt
 
 jobs:
@@ -14,15 +16,15 @@ jobs:
       - audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Setup Node 16
-        uses: actions/setup-node@v3
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
         with:
-          node-version: 16.x
+          node-version: 20.x
 
       - name: Cache Node Modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: frontend/node_modules
           key: fe-node-${{ hashFiles('frontend/package-lock.json') }}
@@ -34,7 +36,7 @@ jobs:
         run: cd frontend && npm run build
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
           path: frontend/build
 
@@ -42,7 +44,7 @@ jobs:
     name: 🛡️ Audit Frontend Packages
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Check for vulnerabilities
         run: cd frontend && npm audit --production --audit-level=high 
@@ -53,15 +55,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Setup Node 16
-        uses: actions/setup-node@v3
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
         with:
-          node-version: 16.x
+          node-version: 20.x
       
       - name: Cache Node Modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: frontend/node_modules
           key: fe-node-${{ hashFiles('frontend/package-lock.json') }}
@@ -77,15 +79,15 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Setup Node 16
-        uses: actions/setup-node@v3
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
         with:
-          node-version: 16.x
+          node-version: 20.x
 
       - name: Cache Node Modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: frontend/node_modules
           key: fe-node-${{ hashFiles('frontend/package-lock.json') }}
@@ -103,21 +105,21 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
           config-file: ./.github/codeql/codeql.config.yml
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 16.x
+          node-version: 20.x
 
       - name: Cache Node Modules
         id: cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: frontend/node_modules
           key: fe-node-${{ hashFiles('frontend/package-lock.json') }}
@@ -129,7 +131,7 @@ jobs:
         run: cd frontend && npm run build
 
       # - name: Perform Analysis
-      #   uses: github/codeql-action/analyze@v2
+      #   uses: github/codeql-action/analyze@v3
 
   deploy:
     name: 🚚 Deploy Frontend Artifact
@@ -138,7 +140,7 @@ jobs:
       - lint
       - test
       - static-analysis
-    if: github.ref == 'refs/heads/olt'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/olt'
     outputs:
       page_url: ${{ steps.deployment.outputs.page_url }}
     permissions:
@@ -150,7 +152,7 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v1
+        uses: actions/deploy-pages@v4
 
   verify:
     name: 🧪 Verify Successful Deployment
@@ -161,7 +163,7 @@ jobs:
     permissions: write-all
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Run Frontend Smoke Test
         run: |
